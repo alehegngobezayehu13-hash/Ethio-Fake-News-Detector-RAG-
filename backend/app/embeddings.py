@@ -30,4 +30,4 @@ if __name__ == "__main__":
     }
     vectors = embed_passages(list(docs.values()))
     for (name, _), vec in zip(docs.items(), vectors):
-        print(f"{name}: {float(np.dot(claim, vec)):.3f}")
+        print(f"{name}: {float(np.dot(claim, vec)):.3f}")  

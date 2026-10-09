@@ -1,0 +1,114 @@
+[
+  {
+    "id": "capital-en",
+    "language": "en",
+    "topic": "capital",
+    "text": "Addis Ababa is the capital city of Ethiopia.",
+    "source": "sample (replace with trusted sources)"
+  },
+  {
+    "id": "capital-am",
+    "language": "am",
+    "topic": "capital",
+    "text": "አዲስ አበባ የኢትዮጵያ ዋና ከተማ ናት።",
+    "source": "sample (replace with trusted sources)"
+  },
+  {
+    "id": "capital-ti",
+    "language": "ti",
+    "topic": "capital",
+    "text": "ኣዲስ ኣበባ ዋና ከተማ ኢትዮጵያ እያ።",
+    "source": "sample (replace with trusted sources)"
+  },
+  {
+    "id": "capital-om",
+    "language": "om",
+    "topic": "capital",
+    "text": "Finfinneen (Addis Ababa) magaalaa guddittii Itiyoophiyaati.",
+    "source": "sample (replace with trusted sources)"
+  },
+  {
+    "id": "calendar-en",
+    "language": "en",
+    "topic": "calendar",
+    "text": "The Ethiopian calendar has 13 months: twelve months of 30 days and a final month of 5 or 6 days.",
+    "source": "sample (replace with trusted sources)"
+  },
+  {
+    "id": "calendar-am",
+    "language": "am",
+    "topic": "calendar",
+    "text": "የኢትዮጵያ ካሌንደር 13 ወራት አሉት፤ አስራ ሁለት ወራት 30 ቀናት ሲኖራቸው የመጨረሻው ወር ጳጉሜን 5 ወይም 6 ቀናት አለው።",
+    "source": "sample (replace with trusted sources)"
+  },
+  {
+    "id": "calendar-ti",
+    "language": "ti",
+    "topic": "calendar",
+    "text": "ናይ ኢትዮጵያ ካለንደር 13 ኣዋርሕ ኣለዎ፤ 12 ኣዋርሕ 30 መዓልቲ ኣለወን፣ እቲ ናይ መወዳእታ ወርሒ (ጳጉሜ) ድማ 5 ወይ 6 መዓልቲ ኣለዎ።",
+    "source": "sample (replace with trusted sources)"
+  },
+  {
+    "id": "calendar-om",
+    "language": "om",
+    "topic": "calendar",
+    "text": "Kaalaandarii Itiyoophiyaa ji'a 13 qaba; ji'oonni kudha lamaan guyyaa 30 qabu, ji'i xumuraa (Phaagumeen) immoo guyyaa 5 ykn 6 qaba.",
+    "source": "sample (replace with trusted sources)"
+  },
+  {
+    "id": "gerd-en",
+    "language": "en",
+    "topic": "gerd",
+    "text": "The Grand Ethiopian Renaissance Dam is built on the Blue Nile (Abay) river in Ethiopia.",
+    "source": "sample (replace with trusted sources)"
+  },
+  {
+    "id": "gerd-am",
+    "language": "am",
+    "topic": "gerd",
+    "text": "ታላቁ የኢትዮጵያ ህዳሴ ግድብ በኢትዮጵያ በአባይ ወንዝ ላይ ተገንብቷል።",
+    "source": "sample (replace with trusted sources)"
+  },
+  {
+    "id": "gerd-ti",
+    "language": "ti",
+    "topic": "gerd",
+    "text": "እቲ ዓቢ ግድብ ሕዳሴ ኢትዮጵያ ኣብ ወሓይዝ ዓባይ (ዓባይ) ኣብ ኢትዮጵያ ተሰሪሑ ኣሎ።",
+    "source": "sample (replace with trusted sources)"
+  },
+  {
+    "id": "gerd-om",
+    "language": "om",
+    "topic": "gerd",
+    "text": "Dambiin Haaromsa Guddaan Itiyoophiyaa Laga Abbayyaa (Abay) irratti ijaarameera.",
+    "source": "sample (replace with trusted sources)"
+  },
+  {
+    "id": "au-en",
+    "language": "en",
+    "topic": "au",
+    "text": "The headquarters of the African Union is located in Addis Ababa.",
+    "source": "sample (replace with trusted sources)"
+  },
+  {
+    "id": "au-am",
+    "language": "am",
+    "topic": "au",
+    "text": "የአፍሪካ ህብረት ዋና መሥሪያ ቤት የሚገኘው በአዲስ አበባ ነው።",
+    "source": "sample (replace with trusted sources)"
+  },
+  {
+    "id": "au-ti",
+    "language": "ti",
+    "topic": "au",
+    "text": "ዋና ቤት ጽሕፈት ሕብረት ኣፍሪካ ኣብ ኣዲስ ኣበባ ይርከብ።",
+    "source": "sample (replace with trusted sources)"
+  },
+  {
+    "id": "au-om",
+    "language": "om",
+    "topic": "au",
+    "text": "Waajjirri Gamtaa Afrikaa guddichi Finfinnee (Addis Ababa) keessa argama.",
+    "source": "sample (replace with trusted sources)"
+  }
+]
