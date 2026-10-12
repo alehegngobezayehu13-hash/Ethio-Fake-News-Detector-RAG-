@@ -1,0 +1,97 @@
+:root {
+  --paper: #f7f7f4;
+  --ink: #1b2430;
+  --muted: #5a6573;
+  --line: #d9dcd5;
+  --action: #2a3f8f;
+  --supported: #1f7a5a;
+  --contradicted: #b3361f;
+  --unclear: #9a6a12;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Source Sans 3", "Noto Sans Ethiopic", system-ui, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+}
+
+main { max-width: 42rem; margin: 0 auto; padding: 3rem 1.25rem 4rem; }
+
+h1 { font-size: 2.5rem; line-height: 1.15; margin: 0 0 0.75rem; letter-spacing: -0.01em; }
+h2 { font-size: 1.5rem; margin: 0 0 0.5rem; }
+h3 { font-size: 1.0625rem; margin: 2rem 0 0.75rem; }
+.lead { color: var(--muted); margin: 0 0 2rem; }
+
+textarea {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  font: inherit;
+  color: inherit;
+  background: #fff;
+  border: 1.5px solid var(--line);
+  border-radius: 6px;
+  resize: vertical;
+}
+
+textarea:focus-visible, button:focus-visible {
+  outline: 3px solid var(--action);
+  outline-offset: 2px;
+}
+
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.25rem; margin-top: 0.75rem; }
+.examples { color: var(--muted); font-size: 0.9375rem; }
+
+#submit {
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: var(--action);
+  border: 0;
+  border-radius: 6px;
+  padding: 0.65rem 1.4rem;
+  cursor: pointer;
+}
+#submit:disabled { opacity: 0.6; cursor: progress; }
+
+.link {
+  font: inherit;
+  color: var(--action);
+  background: none;
+  border: 0;
+  padding: 0 0.25rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+#status { min-height: 1.5rem; margin: 1rem 0 0; color: var(--muted); }
+#status.error { color: var(--contradicted); }
+
+.verdict { margin-top: 1.5rem; padding: 0.25rem 0 0.25rem 1.1rem; border-left: 6px solid var(--unclear); }
+.verdict.supported { border-color: var(--supported); }
+.verdict.contradicted { border-color: var(--contradicted); }
+.verdict.supported h2 { color: var(--supported); }
+.verdict.contradicted h2 { color: var(--contradicted); }
+.verdict.not_enough_evidence h2 { color: var(--unclear); }
+.verdict p { margin: 0; }
+
+.evidence { list-style: none; margin: 0; padding: 0; }
+.evidence li { padding: 0.9rem 0; border-top: 1px solid var(--line); }
+.evidence li:last-child { border-bottom: 1px solid var(--line); }
+.evidence .text { margin: 0 0 0.25rem; }
+.evidence .meta { margin: 0; color: var(--muted); font-size: 0.9rem; }
+.evidence .used { color: var(--ink); font-weight: 600; }
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  h1 { font-size: 2rem; }
+  main { padding-top: 2rem; }
+}

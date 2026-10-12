@@ -1,6 +1,8 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.staticfiles import StaticFiles
 from google.genai import errors as genai_errors
 from pydantic import BaseModel, Field
 
@@ -9,14 +11,12 @@ from backend.app.retriever import Retriever
 from backend.app.verdict import check_claim
 
 TOP_K = 3
-
+FRONTEND_DIR = Path(__file__).resolve().parents[2] / "frontend"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Build the search index once at startup, not on every request.
     app.state.retriever = Retriever(load_documents())
     yield
-
 
 app = FastAPI(
     title="Ethio Fake News Detector",
@@ -25,10 +25,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-
 class CheckRequest(BaseModel):
     claim: str = Field(max_length=1000)
-
 
 class EvidenceItem(BaseModel):
     id: str
@@ -37,7 +35,6 @@ class EvidenceItem(BaseModel):
     source: str
     score: float
 
-
 class CheckResponse(BaseModel):
     claim: str
     verdict: str
@@ -45,12 +42,10 @@ class CheckResponse(BaseModel):
     evidence_ids: list[str]
     evidence: list[EvidenceItem]
 
-
 @app.get("/health")
 def health():
     """Simple endpoint to confirm the server is running."""
     return {"status": "ok"}
-
 
 @app.post("/check", response_model=CheckResponse)
 def check(body: CheckRequest, request: Request):
@@ -86,3 +81,5 @@ def check(body: CheckRequest, request: Request):
             for doc, score in results
         ],
     )
+
+app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")

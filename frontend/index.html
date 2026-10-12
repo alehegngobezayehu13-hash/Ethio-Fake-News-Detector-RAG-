@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Check a news claim</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;600&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main>
+    <h1>Is this claim true?</h1>
+    <p class="lead">Paste a news claim in Amharic, Afaan Oromo, Tigrinya or English. We compare it with trusted sources and show the evidence.</p>
+
+    <form id="check-form">
+      <label for="claim" class="visually-hidden">Claim</label>
+      <textarea id="claim" rows="4" maxlength="1000" placeholder="Paste the claim here" required></textarea>
+      <div class="actions">
+        <button type="submit" id="submit">Check claim</button>
+        <span class="examples">
+          Try:
+          <button type="button" class="link" data-claim="The Ethiopian calendar has 12 months.">calendar</button>
+          <button type="button" class="link" data-claim="አዲስ አበባ የኢትዮጵያ ዋና ከተማ ናት።">Amharic</button>
+          <button type="button" class="link" data-claim="Kaalaandarii Itiyoophiyaa ji'a 12 qaba.">Afaan Oromo</button>
+        </span>
+      </div>
+    </form>
+
+    <p id="status" role="status" aria-live="polite"></p>
+
+    <section id="result" hidden>
+      <div id="verdict" class="verdict">
+        <h2 id="verdict-label"></h2>
+        <p id="verdict-explanation"></p>
+      </div>
+      <h3>Evidence we compared it with</h3>
+      <ul id="evidence" class="evidence"></ul>
+    </section>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>
