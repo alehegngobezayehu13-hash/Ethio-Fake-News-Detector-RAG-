@@ -1,4 +1,7 @@
+"""Fetch web pages with a real browser and extract readable article text."""
+
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from playwright.sync_api import Error as PlaywrightError
@@ -10,6 +13,7 @@ MIN_LINE_CHARS = 15
 BLOCKED_RESOURCES = {"image", "media", "font"}
 NOISE_SELECTORS = "script, style, noscript, nav, header, footer, aside, form, iframe"
 
+# Runs inside the page: remove page furniture, then read the main content.
 EXTRACT_JS = """
 (noise) => {
   document.querySelectorAll(noise).forEach((el) => el.remove());
@@ -18,11 +22,13 @@ EXTRACT_JS = """
 }
 """
 
+
 @dataclass
 class FetchedPage:
     url: str
     title: str
     text: str
+
 
 def clean_text(raw: str) -> str:
     """Drop blank and very short lines (menus, buttons) and cap the length."""
@@ -30,8 +36,16 @@ def clean_text(raw: str) -> str:
     kept = [line for line in lines if len(line) >= MIN_LINE_CHARS]
     return "\n".join(kept)[:MAX_CHARS]
 
-def fetch_pages(urls: list[str]) -> list[FetchedPage]:
-    """Open each URL in one browser session and return the pages that loaded."""
+
+def fetch_pages(
+    urls: list[str],
+    url_filter: Callable[[str], bool] | None = None,
+) -> list[FetchedPage]:
+    """Open each URL in one browser session and return the pages that loaded.
+
+    If url_filter is given, a page is kept only when the address it ends up on
+    (after any redirects) passes the filter.
+    """
     urls = [u for u in urls if u.startswith(("http://", "https://"))]
     pages: list[FetchedPage] = []
     if not urls:
@@ -40,6 +54,7 @@ def fetch_pages(urls: list[str]) -> list[FetchedPage]:
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context()
+        # Skip images, video and fonts: we only need the text, and it's faster.
         context.route(
             "**/*",
             lambda route: route.abort()
@@ -50,16 +65,20 @@ def fetch_pages(urls: list[str]) -> list[FetchedPage]:
             page = context.new_page()
             try:
                 page.goto(url, timeout=PAGE_TIMEOUT_MS, wait_until="domcontentloaded")
+                final_url = page.url
+                if url_filter and not url_filter(final_url):
+                    continue  # Redirected somewhere we don't trust.
                 title = page.title()
                 text = clean_text(page.evaluate(EXTRACT_JS, NOISE_SELECTORS))
                 if text:
-                    pages.append(FetchedPage(url=url, title=title, text=text))
+                    pages.append(FetchedPage(url=final_url, title=title, text=text))
             except PlaywrightError:
                 pass  # Timeout, blocked, or a broken page: skip it.
             finally:
                 page.close()
         browser.close()
     return pages
+
 
 if __name__ == "__main__":
     test_urls = sys.argv[1:] or ["https://en.wikipedia.org/wiki/Addis_Ababa"]

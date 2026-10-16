@@ -19,3 +19,4 @@ chroma_db/
 .DS_Store
 .vscode/
 .idea/
+data/crawled/
