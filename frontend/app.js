@@ -30,6 +30,16 @@ function renderResult(data) {
   for (const item of data.evidence) {
     const li = document.createElement("li");
 
+    if (item.url.startsWith("https://") || item.url.startsWith("http://")) {
+      const link = document.createElement("a");
+      link.href = item.url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.className = "source-link";
+      link.textContent = item.title || item.url;
+      li.append(link);
+    }
+
     const text = document.createElement("p");
     text.className = "text";
     text.textContent = item.text;
@@ -37,7 +47,7 @@ function renderResult(data) {
     const meta = document.createElement("p");
     meta.className = "meta";
     const language = LANGUAGE_NAMES[item.language] || item.language;
-    meta.textContent = `${language}, ${item.source}`;
+    meta.textContent = `${item.source}, ${language}`;
     if (data.evidence_ids.includes(item.id)) {
       const used = document.createElement("span");
       used.className = "used";

@@ -95,3 +95,11 @@ textarea:focus-visible, button:focus-visible {
   h1 { font-size: 2rem; }
   main { padding-top: 2rem; }
 }
+
+.evidence .source-link {
+  display: inline-block;
+  margin-bottom: 0.25rem;
+  color: var(--action);
+  font-weight: 600;
+  text-decoration: underline;
+}

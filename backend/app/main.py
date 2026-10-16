@@ -6,17 +6,19 @@ from fastapi.staticfiles import StaticFiles
 from google.genai import errors as genai_errors
 from pydantic import BaseModel, Field
 
-from backend.app.documents import load_documents
+from backend.app.documents import load_all_documents
 from backend.app.retriever import Retriever
 from backend.app.verdict import check_claim
 
-TOP_K = 3
+TOP_K = 5
 FRONTEND_DIR = Path(__file__).resolve().parents[2] / "frontend"
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.retriever = Retriever(load_documents())
+    app.state.retriever = Retriever(load_all_documents())
     yield
+
 
 app = FastAPI(
     title="Ethio Fake News Detector",
@@ -25,15 +27,20 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+
 class CheckRequest(BaseModel):
     claim: str = Field(max_length=1000)
+
 
 class EvidenceItem(BaseModel):
     id: str
     language: str
     text: str
     source: str
+    url: str
+    title: str
     score: float
+
 
 class CheckResponse(BaseModel):
     claim: str
@@ -42,14 +49,14 @@ class CheckResponse(BaseModel):
     evidence_ids: list[str]
     evidence: list[EvidenceItem]
 
+
 @app.get("/health")
 def health():
-    """Simple endpoint to confirm the server is running."""
     return {"status": "ok"}
+
 
 @app.post("/check", response_model=CheckResponse)
 def check(body: CheckRequest, request: Request):
-    """Check a claim: retrieve evidence, then ask the LLM for a verdict."""
     claim = body.claim.strip()
     if len(claim) < 3:
         raise HTTPException(status_code=400, detail="Claim is too short.")
@@ -76,10 +83,13 @@ def check(body: CheckRequest, request: Request):
                 language=doc.language,
                 text=doc.text,
                 source=doc.source,
+                url=doc.url,
+                title=doc.title,
                 score=score,
             )
             for doc, score in results
         ],
     )
+
 
 app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
