@@ -1,5 +1,6 @@
 import argparse
 import json
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
@@ -13,6 +14,8 @@ from backend.app.sources import FEEDS, Feed
 
 OUTPUT_PATH = Path(__file__).resolve().parents[2] / "data" / "crawled" / "pages.jsonl"
 USER_AGENT = "Mozilla/5.0 (compatible; EthioFakeNewsDetector/0.1)"
+BATCH_SIZE = 20             
+REQUEST_DELAY_SECONDS = 1.0 
 
 
 def host_in(url: str, domains: tuple[str, ...]) -> bool:
@@ -20,15 +23,11 @@ def host_in(url: str, domains: tuple[str, ...]) -> bool:
     return any(host == d or host.endswith("." + d) for d in domains)
 
 
-def links_from_parsed(parsed, limit: int) -> list[str]:
-    links: list[str] = []
-    for entry in parsed.entries:
-        link = entry.get("link")
-        if link and link not in links:
-            links.append(link)
-        if len(links) >= limit:
-            break
-    return links
+def feed_page_url(url: str, page: int) -> str:
+    if page == 1:
+        return url
+    separator = "&" if "?" in url else "?"
+    return f"{url}{separator}paged={page}"
 
 
 def fetch_feed_text(url: str) -> str:
@@ -44,27 +43,63 @@ def fetch_feed_text(url: str) -> str:
             browser.close()
 
 
-def parse_feed(feed: Feed):
-    """Read a feed with a plain request first, then retry through the browser."""
-    parsed = feedparser.parse(feed.url, agent=USER_AGENT)
+def parse_feed(url: str):
+    parsed = feedparser.parse(url, agent=USER_AGENT)
     if not parsed.entries:
-        text = fetch_feed_text(feed.url)
+        text = fetch_feed_text(url)
         if text:
             parsed = feedparser.parse(text)
     return parsed
 
 
+def entry_info(entry) -> dict:
+    tags = [t.get("term", "") for t in entry.get("tags", []) if t.get("term")]
+    return {
+        "link": entry.get("link", ""),
+        "published": entry.get("published", ""),
+        "tags": tags,
+    }
+
+
+def read_feed(feed: Feed, max_pages: int) -> list[dict]:
+    entries: list[dict] = []
+    for page in range(1, (max_pages if feed.paged else 1) + 1):
+        parsed = parse_feed(feed_page_url(feed.url, page))
+        if not parsed.entries:
+            break  
+        entries.extend(entry_info(e) for e in parsed.entries)
+        if page < max_pages and feed.paged:
+            time.sleep(REQUEST_DELAY_SECONDS)
+    return entries
+
+
+def select_new(entries: list[dict], feed: Feed, limit: int, seen: set[str]) -> list[dict]:
+    chosen: list[dict] = []
+    links: set[str] = set()
+    for entry in entries:
+        link = entry["link"]
+        if not link or link in seen or link in links or not host_in(link, feed.domains):
+            continue
+        links.add(link)
+        chosen.append(entry)
+        if len(chosen) >= limit:
+            break
+    return chosen
+
+
 def load_seen_urls(path: Path = OUTPUT_PATH) -> set[str]:
-    """URLs already saved by earlier runs, so we never store an article twice."""
     seen: set[str] = set()
     if not path.exists():
         return seen
     with open(path, encoding="utf-8") as f:
         for line in f:
             try:
-                seen.add(json.loads(line)["url"])
-            except (json.JSONDecodeError, KeyError):
+                record = json.loads(line)
+            except json.JSONDecodeError:
                 continue
+            seen.add(record.get("url", ""))
+            seen.add(record.get("feed_url", ""))
+    seen.discard("")
     return seen
 
 
@@ -75,54 +110,64 @@ def append_records(records: list[dict], path: Path = OUTPUT_PATH) -> None:
             f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
-def crawl_feed(feed: Feed, per_feed: int, seen: set[str]) -> tuple[int, list[dict]]:
-    """Read one feed and fetch its new articles. Returns (entries in feed, saved records)."""
-    parsed = parse_feed(feed)
-    links = [
-        link
-        for link in links_from_parsed(parsed, per_feed)
-        if host_in(link, feed.domains) and link not in seen
-    ]
-    if not links:
-        return len(parsed.entries), []
-
-    pages = fetch_pages(links, url_filter=lambda url: host_in(url, feed.domains))
-    fetched_at = datetime.now(timezone.utc).isoformat()
-    records = [
-        {
-            "url": page.url,
-            "title": page.title,
-            "text": page.text,
-            "language": feed.language,
-            "source": feed.name,
-            "fetched_at": fetched_at,
-        }
-        for page in pages
-        if page.url not in seen
-    ]
-    return len(parsed.entries), records
+def crawl_feed(feed: Feed, per_feed: int, max_pages: int, seen: set[str]) -> tuple[int, int]:
+    entries = read_feed(feed, max_pages)
+    todo = select_new(entries, feed, per_feed, seen)
+    saved = 0
+    for start in range(0, len(todo), BATCH_SIZE):
+        batch = todo[start:start + BATCH_SIZE]
+        info = {e["link"]: e for e in batch}
+        pages = fetch_pages(
+            [e["link"] for e in batch],
+            url_filter=lambda url: host_in(url, feed.domains),
+        )
+        fetched_at = datetime.now(timezone.utc).isoformat()
+        records = []
+        for page in pages:
+            if page.url in seen:
+                continue
+            extra = info.get(page.requested_url, {})
+            records.append(
+                {
+                    "url": page.url,
+                    "feed_url": page.requested_url,
+                    "title": page.title,
+                    "text": page.text,
+                    "language": feed.language,
+                    "source": feed.name,
+                    "published": extra.get("published", ""),
+                    "tags": extra.get("tags", []),
+                    "fetched_at": fetched_at,
+                }
+            )
+        append_records(records)
+        for record in records:
+            seen.add(record["url"])
+            seen.add(record["feed_url"])
+        saved += len(records)
+        print(f"  {feed.name}: {saved} saved so far ({min(start + BATCH_SIZE, len(todo))}/{len(todo)} tried)")
+    return len(entries), saved
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Crawl trusted news feeds.")
     parser.add_argument("--per-feed", type=int, default=10, help="max new articles per feed")
+    parser.add_argument("--max-pages", type=int, default=5, help="feed pages to read for pageable feeds")
     args = parser.parse_args()
 
     seen = load_seen_urls()
     total = 0
     for feed in FEEDS:
         try:
-            entries, records = crawl_feed(feed, args.per_feed, seen)
+            entries, saved = crawl_feed(feed, args.per_feed, args.max_pages, seen)
         except Exception as error:  
             print(f"WARNING {feed.name}: failed ({error})")
             continue
         if entries == 0:
             print(f"WARNING {feed.name}: no entries found, check the feed address")
             continue
-        append_records(records)
-        seen.update(r["url"] for r in records)
-        total += len(records)
-        print(f"{feed.name}: {entries} entries in feed, {len(records)} new articles saved")
+        total += saved
+        print(f"{feed.name}: {entries} entries in feed, {saved} new articles saved")
 
     print(f"\nDone. {total} new articles saved to {OUTPUT_PATH}")
 

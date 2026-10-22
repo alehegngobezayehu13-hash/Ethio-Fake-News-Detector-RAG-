@@ -13,7 +13,6 @@ MIN_LINE_CHARS = 15
 BLOCKED_RESOURCES = {"image", "media", "font"}
 NOISE_SELECTORS = "script, style, noscript, nav, header, footer, aside, form, iframe"
 
-# Runs inside the page: remove page furniture, then read the main content.
 EXTRACT_JS = """
 (noise) => {
   document.querySelectorAll(noise).forEach((el) => el.remove());
@@ -28,6 +27,7 @@ class FetchedPage:
     url: str
     title: str
     text: str
+    requested_url: str = ""  
 
 
 def clean_text(raw: str) -> str:
@@ -54,7 +54,6 @@ def fetch_pages(
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context()
-        # Skip images, video and fonts: we only need the text, and it's faster.
         context.route(
             "**/*",
             lambda route: route.abort()
@@ -67,13 +66,13 @@ def fetch_pages(
                 page.goto(url, timeout=PAGE_TIMEOUT_MS, wait_until="domcontentloaded")
                 final_url = page.url
                 if url_filter and not url_filter(final_url):
-                    continue  # Redirected somewhere we don't trust.
+                    continue  
                 title = page.title()
                 text = clean_text(page.evaluate(EXTRACT_JS, NOISE_SELECTORS))
                 if text:
-                    pages.append(FetchedPage(url=final_url, title=title, text=text))
+                    pages.append(FetchedPage(final_url, title, text, requested_url=url))
             except PlaywrightError:
-                pass  # Timeout, blocked, or a broken page: skip it.
+                pass  
             finally:
                 page.close()
         browser.close()
