@@ -110,9 +110,10 @@ def chunk_text(text: str, max_chars: int) -> list[str]:
         pieces.extend(pack(cut, max_chars, " "))
 
     chunks = pack(pieces, max_chars, "\n")
-    # Fold a tiny last chunk into the one before it instead of losing it.
-    if len(chunks) > 1 and len(chunks[-1]) < MIN_CHUNK_CHARS:
-        chunks[-2] = chunks[-2] + "\n" + chunks.pop()
+    if len(chunks) >= 2 and len(chunks[-1]) < MIN_CHUNK_CHARS:
+        last_chunk = chunks.pop()
+        chunks[-1] = chunks[-1] + "\n" + last_chunk
+
     return [c for c in chunks if len(c) >= MIN_CHUNK_CHARS]
 
 

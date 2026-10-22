@@ -20,3 +20,4 @@ chroma_db/
 .vscode/
 .idea/
 data/crawled/
+data/training/
