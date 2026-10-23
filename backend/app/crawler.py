@@ -10,12 +10,13 @@ from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import sync_playwright
 
 from backend.app.fetcher import PAGE_TIMEOUT_MS, fetch_pages
-from backend.app.sources import FEEDS, Feed
+from backend.app.sources import CHANNELS, FEEDS, Channel, Feed
+from backend.app.telegram import post_record, read_posts
 
 OUTPUT_PATH = Path(__file__).resolve().parents[2] / "data" / "crawled" / "pages.jsonl"
 USER_AGENT = "Mozilla/5.0 (compatible; EthioFakeNewsDetector/0.1)"
 BATCH_SIZE = 20             
-REQUEST_DELAY_SECONDS = 1.0 
+REQUEST_DELAY_SECONDS = 1.0  
 
 
 def host_in(url: str, domains: tuple[str, ...]) -> bool:
@@ -74,6 +75,7 @@ def read_feed(feed: Feed, max_pages: int) -> list[dict]:
 
 
 def select_new(entries: list[dict], feed: Feed, limit: int, seen: set[str]) -> list[dict]:
+    """Entries on a trusted domain that we have not saved yet, without duplicates."""
     chosen: list[dict] = []
     links: set[str] = set()
     for entry in entries:
@@ -88,6 +90,7 @@ def select_new(entries: list[dict], feed: Feed, limit: int, seen: set[str]) -> l
 
 
 def load_seen_urls(path: Path = OUTPUT_PATH) -> set[str]:
+    """Addresses already saved by earlier runs, so we never store an article twice."""
     seen: set[str] = set()
     if not path.exists():
         return seen
@@ -111,6 +114,7 @@ def append_records(records: list[dict], path: Path = OUTPUT_PATH) -> None:
 
 
 def crawl_feed(feed: Feed, per_feed: int, max_pages: int, seen: set[str]) -> tuple[int, int]:
+    """Read one feed and save its new articles. Returns (entries seen, articles saved)."""
     entries = read_feed(feed, max_pages)
     todo = select_new(entries, feed, per_feed, seen)
     saved = 0
@@ -149,10 +153,24 @@ def crawl_feed(feed: Feed, per_feed: int, max_pages: int, seen: set[str]) -> tup
     return len(entries), saved
 
 
+def crawl_channel(channel: Channel, limit: int, seen: set[str]) -> tuple[int, int]:
+    """Read a public Telegram channel. Returns (posts read, posts saved)."""
+    posts = read_posts(channel.username, limit)
+    records = []
+    for post in posts:
+        record = post_record(post, channel)
+        if record and record["url"] not in seen:
+            records.append(record)
+            seen.add(record["url"])
+    append_records(records)
+    return len(posts), len(records)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Crawl trusted news feeds.")
     parser.add_argument("--per-feed", type=int, default=10, help="max new articles per feed")
     parser.add_argument("--max-pages", type=int, default=5, help="feed pages to read for pageable feeds")
+    parser.add_argument("--per-channel", type=int, default=100, help="Telegram posts to read per channel")
     args = parser.parse_args()
 
     seen = load_seen_urls()
@@ -168,6 +186,18 @@ def main() -> None:
             continue
         total += saved
         print(f"{feed.name}: {entries} entries in feed, {saved} new articles saved")
+
+    for channel in CHANNELS:
+        try:
+            read, saved = crawl_channel(channel, args.per_channel, seen)
+        except Exception as error:
+            print(f"WARNING {channel.name}: failed ({error})")
+            continue
+        if read == 0:
+            print(f"WARNING {channel.name}: no posts found, check the channel name")
+            continue
+        total += saved
+        print(f"{channel.name}: {read} posts read, {saved} new posts saved")
 
     print(f"\nDone. {total} new articles saved to {OUTPUT_PATH}")
 

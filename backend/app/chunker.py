@@ -18,7 +18,6 @@ DATE_LINE = re.compile(
     r"November|December) \d{1,2}(?:st|nd|rd|th)?, \d{4}|\d{1,2} \S+ \d{4})$"
 )
 
-# Page furniture that sits between a start line and an end line.
 BLOCKS = [
     (re.compile(r"^Skip .+ and continue reading$"), re.compile(r"^End of ")),
     (re.compile(r"^Beeksisa bira darbii dubbisi"), re.compile(r"^Xumura beeksisaa")),
@@ -28,6 +27,7 @@ BLOCKS = [
 NOISE_PREFIXES = (
     "ዳታን በመቆጠብ", "የፎቶው ባለመብት", "የምስሉ መግለጫ", "ታትሟል",
     "Daataa qusachuuf", "MADDA SUURAA", "Ibsa waa'ee suuraa", "Maxxanfame", "Yeroo dubbisuu",
+    "@", "http://", "https://", 
 )
 
 
