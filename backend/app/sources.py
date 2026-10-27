@@ -29,7 +29,9 @@ FEEDS = [
     Feed("CNN Africa", "http://rss.cnn.com/rss/edition_africa.rss", "en", CNN),
     Feed("CNN World", "http://rss.cnn.com/rss/edition_world.rss", "en", CNN),
     Feed("Ethiopia Check", "https://ethiopiacheck.org/feed", "en", ("ethiopiacheck.org",), paged=True),
-  
+    Feed("VOA Amharic", "https://amharic.voanews.com/api/epiqq", "am", ("voanews.com",)),
+    Feed("VOA Tigrinya", "https://tigrigna.voanews.com/api/zgbkyl-vomx-tpe-v-v", "ti", ("voanews.com",)),
+    Feed("VOA Afaan Oromoo", "https://www.voaafaanoromoo.com/api/z-ojyl-vomx-tpergbt", "om", ("voaafaanoromoo.com", "voanews.com")),
 ]
 
 CHANNELS = [
