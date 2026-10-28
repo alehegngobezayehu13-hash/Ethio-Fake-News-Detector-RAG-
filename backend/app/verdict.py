@@ -54,6 +54,8 @@ print("Verdict model loaded successfully.")
 
 
 def predict_pair(claim: str, evidence_text: str) -> int:
+    
+
     inputs = tokenizer(
         claim,
         evidence_text,
@@ -79,13 +81,14 @@ def predict_pair(claim: str, evidence_text: str) -> int:
 
 
 def check_claim(claim: str, evidence: list[Document]) -> dict:
+
     if not evidence:
         return {
-            "verdict": "not_enough_evidence",
+            "verdict": None,
             "explanation": (
-                "There is not enough retrieved evidence "
-                "to determine whether this claim is true."
+                "No evidence was retrieved for this claim."
             ),
+            "evidence": [],
         }
 
     predictions = []
@@ -98,12 +101,10 @@ def check_claim(claim: str, evidence: list[Document]) -> dict:
 
         predictions.append(predicted_id)
 
-   
     counts = {
         label_id: predictions.count(label_id)
         for label_id in range(len(LABELS))
     }
-
 
     final_id = max(
         counts,
@@ -124,11 +125,13 @@ def check_claim(claim: str, evidence: list[Document]) -> dict:
 
     else:
         explanation = (
-            "The retrieved evidence is not sufficient "
-            "to determine whether the claim is true."
+            "The retrieved evidence does not provide "
+            "enough relevant information to support or "
+            "contradict the claim."
         )
 
     return {
         "verdict": final_verdict,
         "explanation": explanation,
+        "evidence": evidence,
     }
